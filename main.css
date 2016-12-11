@@ -1,0 +1,118 @@
+body {
+font-family: "Calibri";
+margin:0px;
+padding:50px;
+font-size: 16px;
+}
+
+span{
+display:block;
+font-size:22px;
+font-weight:600;
+padding-bottom:5px;
+padding-top:5px;
+}
+
+#settings, #results {
+background-color: #DDDDDD;
+width:400px;
+padding:15px;
+border: 1px solid #000000;
+}
+
+#settings input{
+display:block;} 
+
+#settings span {
+display:block;
+font-weight:300;
+font-size:14px;
+padding-top:0px;
+padding-bottom:0px;
+}
+
+#results span{
+font-size:16px;
+display:block;
+font-weight:500;
+padding-bottom:0px;
+}
+
+.fullfield{
+display: inline-block;
+width: 120px;
+padding-bottom:5px;
+background-color: #DDDDDD;
+text-align: center;
+}
+
+.fullfield2{
+display: inline-block;
+width: 120px;
+padding-bottom:5px;
+background-color: #FFFFFF;
+text-align: center;
+}
+
+.fullfield2 input.ng-invalid.ng-touched {
+background-color: #FA787E;
+}
+
+.fullfield input.ng-invalid.ng-touched {
+background-color: #FA787E;
+}
+
+#prog{
+width: fit-content;
+height: fit-content;
+max-width:1320px;
+border: 1px solid #000000;
+}
+
+#buttons{
+padding-top:5px;
+padding-bottom:5px;
+}
+
+.smallfield{
+margin-left:5px;
+min-width:20px;
+border: 0px solid #000000;
+}
+
+.smallfield input{
+width:18px;
+}
+
+.smallfield2{
+margin-left:5px;
+min-width:32px;
+border: 0px solid #000000;
+}
+
+.smallfield2 input{
+width:30px;
+}
+
+#logs{
+width: fit-content;
+height: fit-content;
+border: 1px solid #000000;
+background-color: #DDDDBB;
+}
+
+.log{
+display: inline-block;
+background-color: #FFFFFF;
+}
+
+.log2{
+display: inline-block;
+background-color: #DDDDBB;
+}
+
+.warning{
+display: inline;
+color: #FF0000;
+height: 18px;
+}

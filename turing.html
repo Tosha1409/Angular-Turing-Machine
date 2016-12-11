@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<title>Turing Machines</title>
+<link rel="stylesheet" href="main.css">
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+</head>
+<body ng-app="turingform" ng-controller="MachineController">
+
+<span>Settings</span>
+
+<form name="form" novalidate ng-cloak ng-submit="run()">
+<div id="settings">
+<label>Alphabet: 
+<input type="text" ng-model="alphabet" name="alphabet" ng-change="check_alphabet()" alphabet required/>
+<span class="warning">
+<span ng-show="form.$submitted || form.alphabet.$touched">
+<span ng-show="form.alphabet.$error.required">Alphabet cannot be empty!</span>
+</span></span>
+</label>
+<label>Amout of steps: 
+<input type="number" ng-model="size" name="size" min="1" max="200" integer required/>
+<span class="warning">
+<span ng-show="form.$submitted || form.size.$touched">
+<span ng-show="form.size.$error.integer">The value is not number!</span>
+<span ng-show="form.size.$error.min || form.size.$error.max"> Wrong amount of steps. 200 is maximum</span>
+<span ng-show="form.size.$error.required">Amount of steps cannot be empty!</span>
+</span></span>
+</label>
+<label>Tape: <input type="text" ng-model="tape" name="tape" inalphabet required/>
+<span class="warning">
+<span ng-show="form.$submitted || form.tape.$touched">
+<span ng-show="form.tape.$error.required">Tape cannot be empty!</span>
+<span ng-show="form.tape.$error.tape">Tape includes symbols that are not in alphabet.</span>
+</span></span>
+</label>
+</div>
+
+<span>Program</span>
+
+<div id="prog">
+<div ng-repeat="lines in programm" ng-class-odd="'fullfield2'" ng-class-even="'fullfield'"> State {{$index}} : 
+<table ng-repeat="(key, item) in lines">                                                        
+<tr>
+<td class="smallfield">{{key}}</td>
+<td class="smallfield"><input type="text" ng-model="item.write" name="item.write" maxlength="1" inalphabet /></td>
+<td class="smallfield"><input type="text" ng-model="item.move" name="item.move" maxlength="1" ng-pattern="/r|R|L|l|N|n/" /></td>
+<td class="smallfield2"><input type="number" ng-model="item.state" name="item.state" maxlength="2" integer min="0" max="{{programm.length}}" /></td>
+</tr>
+</table>
+</div>
+</div>
+
+<div id="buttons">
+<input type="button" ng-click="addstate()" value="+" />
+<input type="button" ng-click="removestate()" value="-" />
+<input type="submit" value="Run program" />
+</div>
+
+</form>
+
+<span>Data:</span>
+
+<div id="results" ng-cloak>
+<span>Alphabet - {{ alphabet }} </span>
+<span>Amount of steps - {{ size }} </span>
+<span>Tape - {{ tape }} </span>
+<span>Logs(Next state of machine and current result on tape): </span>
+<div id="logs">
+<div ng-repeat="line in workinglog">
+<div class="log">{{line[0]}}</div> 
+<div class="log2">{{line[1].join("")}}</div> 
+</div>
+</div>
+</div>
+
+</body>
+</html> 
+
+<script>
+(function(angular) {
+  'use strict';
+var app = angular.module('turingform', []);
+var INTEGER_REGEXP = /^\-?\d+$/;
+var INALPHABET_REGEXP = /^$/;
+var programm = [];
+var workingtape = [];
+var workinglog = [];
+
+//validation of integer
+app.directive('integer', function() {
+  return {
+    require: 'ngModel',
+    link: function(scope, elm, attrs, ctrl) {
+      ctrl.$validators.integer = function(modelValue, viewValue) {
+        if (ctrl.$isEmpty(modelValue)) {
+          // consider empty models to be valid
+          return true;
+        }
+        if (INTEGER_REGEXP.test(viewValue)) {
+          // it is valid
+          return true;
+        }
+        // it is invalid
+        return false;
+      };
+    }
+  };
+});  
+
+//validation of tape
+app.directive('inalphabet', function() {
+  return {
+    require: 'ngModel',
+    link: function(scope, elm, attrs, ctrl) {
+      ctrl.$validators.tape = function(modelValue, viewValue) {
+        if (ctrl.$isEmpty(modelValue)) {
+          return true;
+        }
+        if (INALPHABET_REGEXP.test(viewValue)) {
+          return true;
+        }
+        return false;
+      };
+    }
+  };
+});  
+
+//array for log (removing empty elements from array)
+function logarray(arr){
+	var logtape = [];
+	for (var i in arr){
+	    if ((arr[i] != null) && (arr[i] != undefined)){
+			logtape.push(arr[i]);
+		}
+	}
+	return logtape;
+}
+
+//setting tape and logs ready for running. working tape have maximum lenght it made just in case if there would be added extra features later.
+function machineinit(maxturns,tape){
+	workingtape = [];
+	workinglog = [];
+  workingtape.length = maxturns;
+  workingtape=[].concat(workingtape,tape.split(""));
+  workingtape.length = maxturns*2;
+}
+
+//one movement of machine
+function machineturn(cur_position, state, turn){
+	if (workingtape[cur_position] == undefined){
+		window.alert("Unexpected symbol on tape");
+		return [cur_position,-1,0];
+	} 
+	var newstate = programm[state][workingtape[cur_position]]["state"];
+	if (newstate == null) {
+		window.alert("There is error somewhere programm went to undefined state");
+		return [cur_position,-1,0];
+	} 
+    workingtape[cur_position]=programm[state][workingtape[cur_position]]["write"];
+	if (programm[state][workingtape[cur_position]]["move"].toUpperCase()=="L"){
+		cur_position--;
+	}
+	else if (programm[state][workingtape[cur_position]]["move"].toUpperCase()=="R"){
+		cur_position++;
+	};
+	turn--;
+	return [cur_position,newstate,turn];
+}
+
+//full run of machine (all movements)
+function machinerun(turn){
+	var cur_position=turn;
+	var state = 0;
+	do{
+		var results = machineturn(cur_position,state,turn);
+		cur_position=results[0];
+		state=results[1];
+		turn=results[2];
+		if (state != -1){
+			workinglog.push([state, logarray(workingtape)]);
+		}
+	} while ((turn > 0) && (state != programm.length));
+}
+		
+//sorting and remvoing repeated elements in array
+function originals (letters){
+	letters.sort();
+    for (var i = letters.length-1; i>=0; i--){
+		if (letters[0]!=letters[letters.length-1]) {
+			letters.unshift(letters.pop());
+		}
+		else if (letters.length>1) {
+			letters.pop();
+		}
+	}
+	letters.sort()
+	return letters;
+}
+
+//adding one more state.
+function addstate1(letters){
+	var alphabet = letters.split("");
+	var tmp = {};
+	for (var line in alphabet) {
+		var a ={};
+		a.write = a.move = "";
+		a.state= null;
+		tmp[alphabet[line]] = a;
+	}
+	programm.push(tmp);
+}
+
+app.controller('MachineController', ['$scope', function($scope) {
+
+//validation of alphabeth and making regular expression for checking symbols in tape
+$scope.check_alphabet = function() {
+	$scope.alphabet = originals($scope.alphabet.split("")).join("");
+	INALPHABET_REGEXP = new RegExp('^['+$scope.alphabet+']+$');
+};
+
+//main function of program
+$scope.run = function() {
+		if ($scope.form.$valid) {
+		machineinit($scope.size, $scope.tape);
+		machinerun($scope.size);
+		$scope.workinglog=workinglog;
+	}	
+};
+
+//adding one more state to "programm"
+$scope.addstate = function() {
+	if ($scope.alphabet != ""){
+		addstate1($scope.alphabet);
+	};
+	$scope.programm = programm;
+};
+
+//removing state from "programm"
+$scope.removestate = function() {
+	if (programm.length > 1){
+		programm.pop();
+	};
+	$scope.programm = programm;
+};
+
+}]);
+
+})(window.angular);
+</script> 
